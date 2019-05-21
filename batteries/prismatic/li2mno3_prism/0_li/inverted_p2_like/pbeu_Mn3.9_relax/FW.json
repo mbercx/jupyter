@@ -1,0 +1,141 @@
+{
+    "spec": {
+        "_launch_dir": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/0_li/inverted_p2_like/pbeu_Mn3.9_relax",
+        "_category": "2nodes",
+        "_tasks": [
+            {
+                "script": [
+                    "cp /scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/0_li/inverted_p2_like/pbeu_Mn3.9_relax/CONTCAR /scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/0_li/inverted_p2_like/pbeu_Mn3.9_relax/POSCAR"
+                ],
+                "use_shell": true,
+                "_fw_name": "ScriptTask"
+            },
+            {
+                "directory": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/0_li/inverted_p2_like/pbeu_Mn3.9_relax",
+                "_fw_name": "{{pybat.workflow.firetasks.VaspTask}}"
+            },
+            {
+                "directory": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/0_li/inverted_p2_like/pbeu_Mn3.9_relax",
+                "in_custodian": false,
+                "number_nodes": 2,
+                "tolerance": 0.01,
+                "fw_action": null,
+                "_fw_name": "{{pybat.workflow.firetasks.PulayTask}}"
+            }
+        ]
+    },
+    "fw_id": 24,
+    "created_on": "2019-03-26T15:15:33.293277",
+    "updated_on": "2019-03-26T17:21:16.618539",
+    "launches": [
+        {
+            "fworker": {
+                "name": "leibniz",
+                "category": [
+                    "2nodes",
+                    "none"
+                ],
+                "query": "{}",
+                "env": {
+                    "vasp_command": "mpirun -genv LD_BIND_NOW=1 vasp_std >> out 2>&1"
+                }
+            },
+            "fw_id": 24,
+            "launch_dir": "/user/antwerpen/202/vsc20248/launchpad/leibniz/pybat/launcher_2019-03-26-17-21-16-498745",
+            "host": "r2c01cn1.leibniz",
+            "ip": "10.28.228.49",
+            "trackers": [],
+            "action": null,
+            "state": "RUNNING",
+            "state_history": [
+                {
+                    "state": "RUNNING",
+                    "created_on": "2019-03-26T17:21:16.599148",
+                    "updated_on": "2019-03-26T17:21:16.599155"
+                }
+            ],
+            "launch_id": 34
+        }
+    ],
+    "archived_launches": [
+        {
+            "fworker": {
+                "name": "leibniz",
+                "category": [
+                    "2nodes",
+                    "none"
+                ],
+                "query": "{}",
+                "env": {
+                    "vasp_command": "mpirun -genv LD_BIND_NOW=1 vasp_std >> out 2>&1"
+                }
+            },
+            "fw_id": 24,
+            "launch_dir": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/0_li/inverted_p2_like/pbeu_Mn3.9_relax",
+            "host": "r3c03cn3.leibniz",
+            "ip": "10.28.228.107",
+            "trackers": [],
+            "action": {
+                "stored_data": {
+                    "_message": "runtime error during task",
+                    "_task": {
+                        "directory": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/0_li/inverted_p2_like/pbeu_Mn3.9_relax",
+                        "in_custodian": false,
+                        "number_nodes": 2,
+                        "tolerance": 0.01,
+                        "fw_action": null,
+                        "_fw_name": "{{pybat.workflow.firetasks.PulayTask}}"
+                    },
+                    "_exception": {
+                        "_stacktrace": "Traceback (most recent call last):\n  File \"/data/antwerpen/202/vsc20248/local/miniconda3/envs/pmg/lib/python3.6/site-packages/fireworks/core/rocket.py\", line 262, in run\n    m_action = t.run_task(my_spec)\n  File \"/data/antwerpen/202/vsc20248/local/python/pybat/pybat/workflow/firetasks.py\", line 135, in run_task\n    return FWAction.from_dict(fw_action)\n  File \"/data/antwerpen/202/vsc20248/local/miniconda3/envs/pmg/lib/python3.6/site-packages/fireworks/utilities/fw_serializers.py\", line 155, in _decorator\n    new_args[0] = {k: _recursive_load(v) for k, v in args[0].items()}\nAttributeError: 'NoneType' object has no attribute 'items'\n",
+                        "_details": null
+                    }
+                },
+                "exit": true,
+                "update_spec": {},
+                "mod_spec": [],
+                "additions": [],
+                "detours": [],
+                "defuse_children": false,
+                "defuse_workflow": false
+            },
+            "state": "FIZZLED",
+            "state_history": [
+                {
+                    "state": "RUNNING",
+                    "created_on": "2019-03-26T15:15:33.675594",
+                    "updated_on": "2019-03-26T15:19:44.140316",
+                    "checkpoint": {
+                        "_task_n": 2,
+                        "_all_stored_data": {
+                            "returncode": 0,
+                            "all_returncodes": [
+                                0
+                            ]
+                        },
+                        "_all_update_spec": {},
+                        "_all_mod_spec": []
+                    }
+                },
+                {
+                    "state": "FIZZLED",
+                    "created_on": "2019-03-26T15:19:44.171193",
+                    "checkpoint": {
+                        "_task_n": 2,
+                        "_all_stored_data": {
+                            "returncode": 0,
+                            "all_returncodes": [
+                                0
+                            ]
+                        },
+                        "_all_update_spec": {},
+                        "_all_mod_spec": []
+                    }
+                }
+            ],
+            "launch_id": 19
+        }
+    ],
+    "state": "RUNNING",
+    "name": "Pulay Step"
+}

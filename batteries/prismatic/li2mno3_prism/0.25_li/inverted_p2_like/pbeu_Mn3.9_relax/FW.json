@@ -1,0 +1,57 @@
+{
+    "spec": {
+        "_launch_dir": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/inverted_p2_like/pbeu_relax",
+        "_category": "2nodes",
+        "_tasks": [
+            {
+                "script": [
+                    "cp /scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/inverted_p2_like/pbeu_relax/CONTCAR /scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/inverted_p2_like/pbeu_relax/POSCAR"
+                ],
+                "use_shell": true,
+                "_fw_name": "ScriptTask"
+            },
+            {
+                "directory": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/inverted_p2_like/pbeu_relax",
+                "_fw_name": "{{pybat.workflow.VaspTask}}"
+            },
+            {
+                "directory": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/inverted_p2_like/pbeu_relax",
+                "in_custodian": false,
+                "number_nodes": 2,
+                "_fw_name": "{{pybat.workflow.PulayTask}}"
+            }
+        ]
+    },
+    "fw_id": 95,
+    "created_on": "2019-01-15T10:20:47.474795",
+    "updated_on": "2019-01-15T11:45:41.732254",
+    "launches": [
+        {
+            "fworker": {
+                "name": "leibniz",
+                "category": "2nodes",
+                "query": "{}",
+                "env": {
+                    "vasp_command": "mpirun -genv LD_BIND_NOW=1 vasp_std >> out 2>&1"
+                }
+            },
+            "fw_id": 95,
+            "launch_dir": "/user/antwerpen/202/vsc20248/launchpad/leibniz/pybat/launcher_2019-01-15-11-45-41-641301",
+            "host": "r1c01cn2.leibniz",
+            "ip": "10.28.228.2",
+            "trackers": [],
+            "action": null,
+            "state": "RUNNING",
+            "state_history": [
+                {
+                    "state": "RUNNING",
+                    "created_on": "2019-01-15T11:45:41.717776",
+                    "updated_on": "2019-01-15T11:45:41.717781"
+                }
+            ],
+            "launch_id": 98
+        }
+    ],
+    "state": "RUNNING",
+    "name": "Pulay Step"
+}

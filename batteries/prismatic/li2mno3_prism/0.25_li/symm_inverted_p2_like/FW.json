@@ -1,0 +1,75 @@
+{
+    "spec": {
+        "_launch_dir": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/0.25_li/symm_inverted_p2_like",
+        "_category": "4nodes",
+        "_tasks": [
+            {
+                "func": "pybat.cli.commands.setup.relax",
+                "kwargs": {
+                    "structure_file": "symm_inverted_p2_like.json",
+                    "functional": [
+                        "scan",
+                        {}
+                    ],
+                    "calculation_dir": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/0.25_li/symm_inverted_p2_like/scan_relax",
+                    "is_metal": false
+                },
+                "_fw_name": "PyTask"
+            },
+            {
+                "directory": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/0.25_li/symm_inverted_p2_like/scan_relax",
+                "_fw_name": "{{pybat.workflow.firetasks.VaspTask}}"
+            },
+            {
+                "func": "pybat.cli.commands.get.get_cathode",
+                "kwargs": {
+                    "directory": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/0.25_li/symm_inverted_p2_like/scan_relax",
+                    "write_cif": true
+                },
+                "_fw_name": "PyTask"
+            },
+            {
+                "directory": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/0.25_li/symm_inverted_p2_like/scan_relax",
+                "in_custodian": false,
+                "number_nodes": 4,
+                "fw_action": null,
+                "_fw_name": "{{pybat.workflow.firetasks.PulayTask}}"
+            }
+        ]
+    },
+    "fw_id": 72,
+    "created_on": "2019-03-28T05:12:30.300365",
+    "updated_on": "2019-03-28T21:37:48.814561",
+    "launches": [
+        {
+            "fworker": {
+                "name": "leibniz",
+                "category": [
+                    "4nodes",
+                    "none"
+                ],
+                "query": "{}",
+                "env": {
+                    "vasp_command": "mpirun -genv LD_BIND_NOW=1 vasp_std >> out 2>&1"
+                }
+            },
+            "fw_id": 72,
+            "launch_dir": "/user/antwerpen/202/vsc20248/launchpad/leibniz/pybat/launcher_2019-03-28-21-37-48-669144",
+            "host": "r1c03cn1.leibniz",
+            "ip": "10.28.228.9",
+            "trackers": [],
+            "action": null,
+            "state": "RUNNING",
+            "state_history": [
+                {
+                    "state": "RUNNING",
+                    "created_on": "2019-03-28T21:37:48.800438",
+                    "updated_on": "2019-03-28T21:37:48.800442"
+                }
+            ],
+            "launch_id": 99
+        }
+    ],
+    "state": "RUNNING",
+    "name": "Geometry optimization"
+}

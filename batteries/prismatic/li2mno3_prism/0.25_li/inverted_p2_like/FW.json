@@ -1,0 +1,60 @@
+{
+    "spec": {
+        "_launch_dir": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/inverted_p2_like",
+        "_category": "2nodes",
+        "_tasks": [
+            {
+                "func": "pybat.cli.commands.setup.scf",
+                "kwargs": {
+                    "structure_file": "scan_relax/final_cathode.json",
+                    "functional": [
+                        "scan",
+                        {}
+                    ],
+                    "calculation_dir": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/inverted_p2_like/scan_scf",
+                    "write_chgcar": false
+                },
+                "_fw_name": "PyTask"
+            },
+            {
+                "directory": "/scratch/antwerpen/202/vsc20248/batteries/Li2MnO3/li2mno3_prism/inverted_p2_like/scan_scf",
+                "_fw_name": "{{pybat.workflow.VaspTask}}"
+            }
+        ]
+    },
+    "fw_id": 318,
+    "created_on": "2019-01-21T12:04:59.263116",
+    "updated_on": "2019-01-21T12:05:10.755564",
+    "launches": [
+        {
+            "fworker": {
+                "name": "leibniz",
+                "category": [
+                    "2nodes",
+                    "none"
+                ],
+                "query": "{}",
+                "env": {
+                    "vasp_command": "mpirun -genv LD_BIND_NOW=1 vasp_std >> out 2>&1"
+                }
+            },
+            "fw_id": 318,
+            "launch_dir": "/user/antwerpen/202/vsc20248/launchpad/leibniz/pybat/launcher_2019-01-21-12-05-10-644938",
+            "host": "r0c01cn3.leibniz",
+            "ip": "10.28.228.147",
+            "trackers": [],
+            "action": null,
+            "state": "RUNNING",
+            "state_history": [
+                {
+                    "state": "RUNNING",
+                    "created_on": "2019-01-21T12:05:10.734877",
+                    "updated_on": "2019-01-21T12:05:10.734883"
+                }
+            ],
+            "launch_id": 294
+        }
+    ],
+    "state": "RUNNING",
+    "name": "SCF calculation"
+}
