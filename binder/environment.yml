@@ -1,8 +1,8 @@
 name: pmg
 channels:
+ - openbabel
  - conda-forge
  - matsci
- - openbabel
 dependencies:
  - python
  - pip
@@ -10,4 +10,3 @@ dependencies:
  - openbabel
  - pip:
    - imolecule
-   - pybel
