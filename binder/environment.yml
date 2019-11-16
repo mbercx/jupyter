@@ -1,0 +1,14 @@
+name: pmg
+channels:
+ - openbabel
+ - conda-forge
+ - matsci
+dependencies:
+ - python
+ - pip
+ - pymatgen
+ - openbabel
+ - ipywidgets
+ - pip:
+   - imolecule
+   - fileupload
