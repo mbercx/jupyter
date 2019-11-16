@@ -8,5 +8,6 @@ dependencies:
  - pip
  - pymatgen
  - openbabel
+ - ipywidgets
  - pip:
    - imolecule
