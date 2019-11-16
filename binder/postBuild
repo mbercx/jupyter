@@ -10,3 +10,6 @@ jupyter nbextension enable  --user --py fileupload
 
 # Notebooks w/ extensions that auto-run code must be "trusted" to work the first time
 jupyter trust parallel/workflow_interface.ipynb
+
+git clone https://github.com/mbercx/vsc-workflows.git
+pip install -e vsc-workflows
