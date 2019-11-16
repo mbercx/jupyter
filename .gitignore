@@ -1,3 +1,7 @@
 .ipynb_checkpoints/
 /batteries/prismatic/temp.cif
+vsc-workflows/
+parallel/__pycache__/
+cage/
 temp.cif
+.DS_Store
