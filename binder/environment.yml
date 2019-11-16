@@ -11,3 +11,4 @@ dependencies:
  - ipywidgets==7.5.1
  - pip:
    - imolecule
+   - ipyfilechooser
