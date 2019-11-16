@@ -10,7 +10,7 @@ dependencies:
  - openbabel
  - ipywidgets==7.5.1
  - jupyter_contrib_nbextensions
- - fileupload
  - pip:
    - imolecule
    - ipyfilechooser
+   - fileupload
