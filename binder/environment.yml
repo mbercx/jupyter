@@ -12,3 +12,4 @@ dependencies:
  - pip:
    - imolecule
    - fileupload
+   - ipyfilechooser
