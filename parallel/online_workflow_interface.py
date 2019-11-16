@@ -7,7 +7,6 @@ from pymatgen import Structure
 
 from ipywidgets import interact, interactive, Select, IntSlider, Button, Output, \
     FileUpload, BoundedIntText, SelectMultiple, Text, VBox, HBox, Layout
-from ipyfilechooser import FileChooser
 
 CLUSTER_DICT = {
     "leibniz": {
