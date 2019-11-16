@@ -8,9 +8,7 @@ dependencies:
  - pip
  - pymatgen
  - openbabel
- - ipywidgets==7.5.1
+ - ipywidgets
  - pip:
-   - jupyter_contrib_nbextensions
    - imolecule
-   - ipyfilechooser
    - fileupload
