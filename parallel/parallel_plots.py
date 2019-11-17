@@ -31,11 +31,11 @@ def interface(f):
     
     select_layout = Layout(width='70px')
 
-    versus = Select(options=["nodes", "kpar"], index=0,
+    versus = Select(options=["NODES", "KPAR"], index=0,
                     layout=select_layout)
     nodes = Select(options=nodes_list, index=0,
                    layout=select_layout)
-    x_axis_select = Select(options=["ncore", "npar"], index=0, 
+    x_axis_select = Select(options=["NCORE", "NPAR"], index=0, 
                            layout=select_layout)
     nodes_select = SelectMultiple(options=nodes_list,
                                   value=nodes_list[:3],
@@ -85,14 +85,14 @@ def interface(f):
                 optimal_settings, {"timing_list": fixed(timing_list)}
             )
         },
-        "NPAR line plot": {
-            "descriptions": ["Nodes", ],
-            "input": (nodes, ),
-            "output": interactive_output(
-                npar_line_plot, {"timing_list": fixed(timing_list),
-                                "nodes": nodes}
-            )
-        }
+#         "NPAR line plot": {
+#             "descriptions": ["Nodes", ],
+#             "input": (nodes, ),
+#             "output": interactive_output(
+#                 npar_line_plot, {"timing_list": fixed(timing_list),
+#                                 "nodes": nodes}
+#             )
+#         }
     }
 
     tab = Tab()
@@ -107,9 +107,9 @@ def interface(f):
 
 def time_plot(timing_list, versus):
     
-    if versus == "nodes":
+    if versus == "NODES":
         time_vs_nodes(timing_list)
-    elif versus == "kpar":
+    elif versus == "KPAR":
         time_vs_kpar(timing_list)
 
 def time_vs_nodes(timing_list):
@@ -133,10 +133,11 @@ def time_vs_nodes(timing_list):
 
     plt.yscale("log")
     ax.set_xlabel("Number of nodes")
-    ax.set_ylabel("Average time/electronic step")
+    ax.set_ylabel("Average time / electronic step (s)")
 
     cbar = plt.colorbar()
-    cbar.ax.set_yticklabels(["1", "8", "20", "42", "112", "252"]);
+    cbar.set_ticks([0, 1])
+    cbar.ax.set_yticklabels([np.min(kpar_list), np.max(kpar_list)]);
     cbar.ax.set_ylabel("KPAR")
     
     return plt
@@ -144,6 +145,7 @@ def time_vs_nodes(timing_list):
 def time_vs_kpar(timing_list):
     
     plt.rcdefaults()
+    plt.rc("font", size=14)
     
     node_list = list(set(
         [t["nodes"] for t in timing_list]
@@ -158,10 +160,11 @@ def time_vs_kpar(timing_list):
 
         plt.plot(kpars, timings, "o")
 
-    plt.xscale("log")
     plt.xlabel("KPAR")
+    if np.max(kpars) > 100:
+        plt.xscale("log")
     plt.yscale("log")
-    plt.ylabel("Average time / electronic step.")
+    plt.ylabel("Average time / electronic step (s)")
 
     plt.legend(node_list, bbox_to_anchor=(1, 1.025), loc="upper left", title="# nodes")
 
@@ -189,15 +192,18 @@ def npar_line_plot(timing_list, nodes):
         plt.plot(kpars, timings, "o-", color=cmap.colors[npars.index(n)])
 
     # Set axis scales
-    plt.xscale("log")
+    if np.max([t["kpar"] for t in nodes_timings]) > 100:
+        plt.xscale("log")
     plt.xlabel("KPAR")
     plt.yscale("log")
     plt.ylabel("Average time / electronic step")
     plt.legend(npars, bbox_to_anchor=(1, 1.025), loc="upper left", title="NPAR")
     
-def chessboard_plot(timing_list, nodes, x_axis="npar"):
+def chessboard_plot(timing_list, nodes, x_axis="NPAR"):
     
     plt.rcdefaults()
+    plt.rc("font", size=14)
+    x_axis = x_axis.lower()
     
     node_timings = [t for t in timing_list if t["nodes"] == nodes]
 
@@ -226,12 +232,12 @@ def chessboard_plot(timing_list, nodes, x_axis="npar"):
 
     ax.set_xticks(range(len(node_x_list)))
     ax.set_xticklabels([str(n) for n in node_x_list])
-    ax.set_xlabel(x_axis)
+    ax.set_xlabel(x_axis.upper())
     ax.set_yticks(range(len(node_kpar_list)))
     ax.set_yticklabels([str(k) for k in node_kpar_list])
     ax.set_ylabel("KPAR")
 
-    plt.title(str(nodes) + " nodes")
+    plt.title(str(nodes) + " NODES")
     
 def tetris_plot(timing_list, nodes_choices, kpar_choices, 
                 ncore_choices):
@@ -335,4 +341,7 @@ def optimal_settings(timing_list):
     )
     ax1.set_xlabel("# nodes")
     ax1.set_ylabel("Average time / electronic step", color="b")
-    ax2.set_ylabel("Efficiency", color="r")
+    reference = str(best_setting_list[0]["nodes"]) + " node"
+    if best_setting_list[0]["nodes"] > 1:
+        reference += "s"
+    ax2.set_ylabel("Efficiency vs " + reference , color="r")
