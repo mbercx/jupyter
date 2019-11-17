@@ -10,7 +10,7 @@ As most DFT calculations require a substantial amount of computational resources
 
 - [`NCORE`](https://cms.mpi.univie.ac.at/wiki/index.php/NCORE): The number of cores that are working together on an individual band. For a specified `NPAR`, `NCORE` is automatically set using the following relation:
 ```
-\text{NCORE} = \frac{\text{#CORES / KPAR}}{\text{NPAR}}
+NCORE = (#CORES / KPAR) / NPAR
 ```
 In other words, the user should specify either `NPAR` or `NCORE`, as they are directly connected. As is said in the VASP manual, `NPAR` is preferred, i.e. if you do set both `NPAR` and `NCORE`, the `NCORE` value is ignored.
 
