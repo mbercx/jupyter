@@ -10,7 +10,7 @@ from ipyfilechooser import FileChooser
 def interface(f):
     
     try:
-        with open(f.selected_filename, "r") as file:
+        with open(f.selected, "r") as file:
             timing_list = json.loads(file.read())
     except FileNotFoundError:
         return "Please select an existing file."
