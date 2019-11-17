@@ -267,11 +267,20 @@ def tetris_plot(timing_list, nodes_choices, kpar_choices,
             norm = colors.Normalize(vmin=np.min([t["timing"] for t in n_timings]),
                                     vmax=np.max(timestep))
         except ValueError:
+            print()
             print("Chosen combination of Nodes/KPAR/NCORE results in empty plot for " + str(n) + " nodes.")
+            plt.close()
             return None
 
         timestep[timestep == 0.0] = np.nan
-        im = ax[i].imshow(timestep, cmap=cm.RdYlGn_r, origin="lower", norm=norm)
+        try:
+            im = ax[i].imshow(timestep, cmap=cm.RdYlGn_r, origin="lower", norm=norm)
+        except TypeError:
+            print()
+            print("Please select at least 2 node choices. For analyzing the optimal " +
+                  "parallelization for a single # of nodes, use the chessboard plot.")
+            plt.close()
+            return None
 
         for x in range(len(kpar_choices)):
             for y in range(len(ncore_choices)):
