@@ -5,3 +5,4 @@ parallel/__pycache__/
 cage/
 temp.cif
 .DS_Store
+parallel/README.md

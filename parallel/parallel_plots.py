@@ -1,19 +1,57 @@
 import os, json
 import numpy as np
 from matplotlib import colors, cm
+from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
 
+from monty.json import MontyDecoder
 from ipywidgets import interact, interactive, interactive_output, fixed, FloatSlider, Tab, \
     Select, SelectMultiple, HBox, VBox, Output, Text, Button, Layout
 from ipyfilechooser import FileChooser
+
+from vscworkflows.firetasks.core import VaspParallelizationTask
+
+
+def find_parallel_config(n_kpoints, nbands, n_nodes, 
+                         cores_per_node=28, optimal_ncore=7):
+    
+    n_cores = int(n_nodes * cores_per_node)
+    
+    kpar_list = VaspParallelizationTask._find_kpar_list(
+        n_kpoints=n_kpoints, n_cores=n_cores, cores_per_node=cores_per_node
+    )
+    
+    choice = {"kpar": 0, "ncore": 0}
+    
+    for k in kpar_list:
+        nc = VaspParallelizationTask._find_ncore(
+            cores_per_k=n_cores // k,
+            optimal_ncore=optimal_ncore,
+            nbands=nbands
+        )
+        if abs(nc - optimal_ncore) <= abs(choice["ncore"] - optimal_ncore):
+            if k > choice["kpar"]:
+                choice = {"kpar": k, "ncore": nc}
+                        
+    kpar = choice["kpar"]
+    ncore = choice["ncore"]
+    
+    core_waste = VaspParallelizationTask._find_core_waste(
+        n_kpoints, kpar, n_cores
+    )
+    
+    return kpar, ncore
 
 def interface(f):
     
     try:
         with open(f.selected, "r") as file:
-            timing_list = json.loads(file.read())
+            data = json.loads(file.read(), cls=MontyDecoder)
     except FileNotFoundError:
         return "Please select an existing file."
+    
+    print("NKPTS = " + str(data["n_kpoints"]) + "\tNBANDS = " + str(data["nbands"]))
+    timing_list = data["timing_list"]
     
     try:
         assert isinstance(timing_list, list)
@@ -63,7 +101,7 @@ def interface(f):
             "descriptions": ["Nodes", "X-axis"],
             "input": (nodes, x_axis_select),
             "output": interactive_output(
-                chessboard_plot, {"timing_list": fixed(timing_list),
+                chessboard_plot, {"data": fixed(data),
                                   "nodes": nodes, 
                                   "x_axis": x_axis_select}
             )
@@ -91,6 +129,14 @@ def interface(f):
 #             "output": interactive_output(
 #                 npar_line_plot, {"timing_list": fixed(timing_list),
 #                                 "nodes": nodes}
+#             )
+#         },
+#         "NCORE line plot": {
+#             "descriptions": ["Nodes", ],
+#             "input": (nodes, ),
+#             "output": interactive_output(
+#                 ncore_line_plot, {"timing_list": fixed(timing_list),
+#                                   "nodes": nodes}
 #             )
 #         }
     }
@@ -168,38 +214,9 @@ def time_vs_kpar(timing_list):
 
     plt.legend(node_list, bbox_to_anchor=(1, 1.025), loc="upper left", title="# nodes")
 
-def npar_line_plot(timing_list, nodes):
+def chessboard_plot(data, nodes, x_axis="NPAR"):
     
-    import matplotlib.pyplot as plt
-    
-    nodes_timings = [timing for timing in timing_list if timing["nodes"] == nodes]
-    nodes_timings = sorted(nodes_timings, key=lambda x: x["kpar"])
-
-    npars = set()
-    for n in [t["npar"] for t in nodes_timings]:
-        npars.add(n)
-    npars = list(npars)
-    npars.sort()
-    npars = npars[:9]
-
-    cmap = cm.plasma._resample(len(npars))
-
-    for n in npars:
-        kpars = [t["kpar"] for t in nodes_timings if t["npar"] == n]
-        timings = [t["timing"] for t in nodes_timings if t["npar"] == n]
-
-
-        plt.plot(kpars, timings, "o-", color=cmap.colors[npars.index(n)])
-
-    # Set axis scales
-    if np.max([t["kpar"] for t in nodes_timings]) > 100:
-        plt.xscale("log")
-    plt.xlabel("KPAR")
-    plt.yscale("log")
-    plt.ylabel("Average time / electronic step")
-    plt.legend(npars, bbox_to_anchor=(1, 1.025), loc="upper left", title="NPAR")
-    
-def chessboard_plot(timing_list, nodes, x_axis="NPAR"):
+    timing_list = data["timing_list"]
     
     plt.rcdefaults()
     plt.rc("font", size=14)
@@ -217,8 +234,13 @@ def chessboard_plot(timing_list, nodes, x_axis="NPAR"):
     for timing in node_timings:
         timestep[node_kpar_list.index(timing["kpar"])][node_x_list.index(timing[x_axis])] = timing["timing"]
 
-    norm = colors.Normalize(vmin=np.min([t["timing"] for t in node_timings]),
-                            vmax=np.max(timestep))
+    node_times = np.array([t["timing"] for t in node_timings])
+    
+    norm = colors.Normalize(
+        vmin=np.min(node_times),
+        vmax=min(np.max(node_times), np.mean(node_times) * 2.0)
+    )
+    
     timestep[timestep == 0.0] = None
 
     fig, ax = plt.subplots(figsize=(len(node_x_list), len(node_kpar_list)))
@@ -236,6 +258,25 @@ def chessboard_plot(timing_list, nodes, x_axis="NPAR"):
     ax.set_yticks(range(len(node_kpar_list)))
     ax.set_yticklabels([str(k) for k in node_kpar_list])
     ax.set_ylabel("KPAR")
+    
+    kpar, ncore = find_parallel_config(
+        data["n_kpoints"], data["nbands"], nodes,
+    )
+    n_cores = node_timings[0]["kpar"] * node_timings[0]["npar"] * node_timings[0]["ncore"]
+    optimal_x = ncore if x_axis == "ncore" else n_cores // kpar // ncore
+    
+    try:
+        ax.add_patch(Rectangle(
+            xy=(node_x_list.index(optimal_x) - 0.5, 
+                node_kpar_list.index(kpar) - 0.5),
+                width=1, height=1,
+                linewidth=3, edgecolor='r', facecolor='none'
+        ))
+        print("The red square indicates the optimal setting determined by VaspParallelizationTask.")
+    except ValueError:
+        print("Optimal settings (KPAR = " + str(kpar) 
+              + " ; " + x_axis.upper() + " = " + str(optimal_x) 
+              + ") not in test.")
 
     plt.title(str(nodes) + " NODES")
     
@@ -267,11 +308,20 @@ def tetris_plot(timing_list, nodes_choices, kpar_choices,
             norm = colors.Normalize(vmin=np.min([t["timing"] for t in n_timings]),
                                     vmax=np.max(timestep))
         except ValueError:
+            print()
             print("Chosen combination of Nodes/KPAR/NCORE results in empty plot for " + str(n) + " nodes.")
+            plt.close()
             return None
 
         timestep[timestep == 0.0] = np.nan
-        im = ax[i].imshow(timestep, cmap=cm.RdYlGn_r, origin="lower", norm=norm)
+        try:
+            im = ax[i].imshow(timestep, cmap=cm.RdYlGn_r, origin="lower", norm=norm)
+        except TypeError:
+            print()
+            print("Please select at least 2 node choices. For analyzing the optimal " +
+                  "parallelization for a single # of nodes, use the chessboard plot.")
+            plt.close()
+            return None
 
         for x in range(len(kpar_choices)):
             for y in range(len(ncore_choices)):
@@ -345,3 +395,68 @@ def optimal_settings(timing_list):
     if best_setting_list[0]["nodes"] > 1:
         reference += "s"
     ax2.set_ylabel("Efficiency vs " + reference , color="r")
+    
+
+def npar_line_plot(timing_list, nodes):
+    
+    import matplotlib.pyplot as plt
+    
+    nodes_timings = [timing for timing in timing_list if timing["nodes"] == nodes]
+    nodes_timings = sorted(nodes_timings, key=lambda x: x["kpar"])
+
+    npars = set()
+    for n in [t["npar"] for t in nodes_timings]:
+        npars.add(n)
+    npars = list(npars)
+    npars.sort()
+    npars = npars[:9]
+
+    cmap = cm.plasma._resample(len(npars))
+
+    for n in npars:
+        kpars = [t["kpar"] for t in nodes_timings if t["npar"] == n]
+        timings = [t["timing"] for t in nodes_timings if t["npar"] == n]
+
+
+        plt.plot(kpars, timings, "o-", color=cmap.colors[npars.index(n)])
+
+    # Set axis scales
+    if np.max([t["kpar"] for t in nodes_timings]) > 100:
+        plt.xscale("log")
+    plt.xlabel("KPAR")
+    plt.yscale("log")
+    plt.ylabel("Average time / electronic step")
+    plt.legend(npars, bbox_to_anchor=(1, 1.025), loc="upper left", title="NPAR")
+    
+
+def ncore_line_plot(timing_list, nodes):
+    
+    import matplotlib.pyplot as plt
+    
+    nodes_timings = [timing for timing in timing_list if timing["nodes"] == nodes]
+    nodes_timings = sorted(nodes_timings, key=lambda x: x["kpar"])
+
+    npars = set()
+    for n in [t["ncore"] for t in nodes_timings]:
+        npars.add(n)
+    npars = list(npars)
+    npars.sort()
+    npars = npars[:9]
+
+    cmap = cm.plasma._resample(len(npars))
+
+    for n in npars:
+        kpars = [t["kpar"] for t in nodes_timings if t["ncore"] == n]
+        timings = [t["timing"] for t in nodes_timings if t["ncore"] == n]
+
+
+        plt.plot(kpars, timings, "o-", color=cmap.colors[npars.index(n)])
+
+    # Set axis scales
+    if np.max([t["kpar"] for t in nodes_timings]) > 100:
+        plt.xscale("log")
+    plt.xlabel("KPAR")
+    plt.yscale("log")
+    plt.ylabel("Average time / electronic step")
+    plt.legend(npars, bbox_to_anchor=(1, 1.025), loc="upper left", title="NCORE")
+
