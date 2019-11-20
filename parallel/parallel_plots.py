@@ -92,7 +92,7 @@ def interface(f):
                                   rows=len(ncore_list),
                                   layout=select_layout)
     hybrid = Checkbox(value=False,
-                      disabled=False)
+                      description="Hybrid?")
 
     widget_mappings = {
         "Timestep": {
@@ -114,13 +114,14 @@ def interface(f):
             )
         },
         "Tetris": {
-            "descriptions": ["Nodes", "KPAR", "NCORE"],
-            "input": [nodes_select, kpar_select, ncore_select],
+            "descriptions": ["Nodes", "KPAR", "NCORE", "Hybrid"],
+            "input": [nodes_select, kpar_select, ncore_select, hybrid],
             "output": interactive_output(
-                tetris_plot, {"timing_list": fixed(timing_list),
+                tetris_plot, {"data": fixed(data),
                               "nodes_choices": nodes_select,
                               "kpar_choices": kpar_select,
-                              "ncore_choices": ncore_select}
+                              "ncore_choices": ncore_select,
+                              "hybrid": hybrid}
             )
         },
         "Optimal": {
@@ -150,7 +151,7 @@ def interface(f):
 
     tab = Tab()
     tab.children = [VBox((HBox([VBox((Button(description=desc, layout=select_layout), inp)) 
-                                for (desc, inp) in zip(w["descriptions"], w["input"])]), w["output"])) 
+                                if desc != "Hybrid" else inp for (desc, inp) in zip(w["descriptions"], w["input"])]), w["output"])) 
                     for w in widget_mappings.values()]
 
     for i, title in enumerate(widget_mappings.keys()):
@@ -287,8 +288,10 @@ def chessboard_plot(data, nodes, x_axis="NPAR", hybrid=False):
 
     plt.title(str(nodes) + " NODES")
     
-def tetris_plot(timing_list, nodes_choices, kpar_choices, 
-                ncore_choices):
+def tetris_plot(data, nodes_choices, kpar_choices, 
+                ncore_choices, hybrid):
+    
+    timing_list = data["timing_list"]
     
     fontsize = 18
     plt.rcParams["axes.linewidth"] = 2
@@ -300,6 +303,8 @@ def tetris_plot(timing_list, nodes_choices, kpar_choices,
     fig, ax = plt.subplots(1, len(nodes_choices), 
                            figsize=(len(nodes_choices) * len(ncore_choices), len(kpar_choices)))
     plt.subplots_adjust(wspace=0, bottom=0.0)
+    
+    print("The red square indicates the optimal setting determined by VaspParallelizationTask.")
 
     for i, n in enumerate(nodes_choices):
 
@@ -343,6 +348,18 @@ def tetris_plot(timing_list, nodes_choices, kpar_choices,
         if i > 0:
             #ax[i].tick_params(left="off", right="off")
             ax[i].yaxis.set_major_locator(plt.NullLocator())
+        
+        kpar, ncore = find_parallel_config(
+            data["n_kpoints"], data["nbands"], n, is_hybrid=hybrid
+        )
+
+        if kpar in kpar_choices and ncore in ncore_choices:
+            ax[i].add_patch(Rectangle(
+                xy=(ncore_choices.index(ncore) - 0.5, 
+                    kpar_choices.index(kpar) - 0.5),
+                    width=1, height=1,
+                    linewidth=3, edgecolor='r', facecolor='none'
+            ))
 
     ax[0].set_yticks(range(len(kpar_choices)))
     ax[0].set_yticklabels([str(k) for k in kpar_choices])
