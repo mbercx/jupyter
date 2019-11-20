@@ -9,39 +9,6 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 from ipywidgets import interactive, fixed, Select, IntSlider, IntRangeSlider, Button, Output, FileUpload, BoundedIntText, Text, VBox, HBox, Layout
 
-try:
-    CLUSTER_DICT = {
-        "leibniz": {
-            "launchpad": LaunchPad.from_dict({
-                'host': 'mongodb+srv://testcluster-au9d3.gcp.mongodb.net',
-                'port': 27017,
-                'name': 'test_leibniz',
-                'username': 'testuser',
-                'password': 'testpassword',
-                'ssl': True,
-                'authsource': 'admin'
-            }),
-            "scratch_dir": "/scratch/antwerpen/202/vsc20248/",
-            "cores_per_node": 28
-        },
-        "hopper": {
-            "launchpad": LaunchPad.from_dict({
-                'host': 'mongodb+srv://testcluster-au9d3.gcp.mongodb.net',
-                'port': 27017,
-                'name': 'test_hopper',
-                'username': 'testuser',
-                'password': 'testpassword',
-                'ssl': True,
-                'authsource': 'admin'
-            }),
-            "scratch_dir": "/scratch/antwerpen/202/vsc20248/",
-            "cores_per_node": 20
-        }
-    }
-except ConfigurationError:
-    print("Failed to connect to mongoDB server specified by the Launchpad. " +
-          "Please check your connection.")
-
     
 def selection_interface(structure, fworker, kpt_density, functional, 
                         nodes_list, nbands, max_kpt_range):

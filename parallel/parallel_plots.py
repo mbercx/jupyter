@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 
 from monty.json import MontyDecoder
 from ipywidgets import interact, interactive, interactive_output, fixed, FloatSlider, Tab, \
-    Select, SelectMultiple, HBox, VBox, Output, Text, Button, Layout
+    Select, SelectMultiple, HBox, VBox, Output, Text, Button, Layout, Checkbox
 from ipyfilechooser import FileChooser
 
 from vscworkflows.firetasks.core import VaspParallelizationTask
 
 
 def find_parallel_config(n_kpoints, nbands, n_nodes, 
-                         cores_per_node=28, optimal_ncore=7):
+                         cores_per_node=28, optimal_ncore=7, is_hybrid=False):
     
     n_cores = int(n_nodes * cores_per_node)
     
@@ -22,6 +22,9 @@ def find_parallel_config(n_kpoints, nbands, n_nodes,
     )
     
     choice = {"kpar": 0, "ncore": 0}
+    
+    if is_hybrid:
+        optimal_ncore += 1
     
     for k in kpar_list:
         nc = VaspParallelizationTask._find_ncore(
@@ -34,7 +37,8 @@ def find_parallel_config(n_kpoints, nbands, n_nodes,
                 choice = {"kpar": k, "ncore": nc}
                         
     kpar = choice["kpar"]
-    ncore = choice["ncore"]
+    ncore = choice["ncore"] if not is_hybrid else \
+                n_cores // choice["kpar"] // choice["ncore"]
     
     core_waste = VaspParallelizationTask._find_core_waste(
         n_kpoints, kpar, n_cores
@@ -87,6 +91,8 @@ def interface(f):
                                   value=ncore_list[:3],
                                   rows=len(ncore_list),
                                   layout=select_layout)
+    hybrid = Checkbox(value=False,
+                      disabled=False)
 
     widget_mappings = {
         "Timestep": {
@@ -98,12 +104,13 @@ def interface(f):
             )
         },
         "Chessboard": {
-            "descriptions": ["Nodes", "X-axis"],
-            "input": (nodes, x_axis_select),
+            "descriptions": ["Nodes", "X-axis", "Hybrid"],
+            "input": (nodes, x_axis_select, hybrid),
             "output": interactive_output(
                 chessboard_plot, {"data": fixed(data),
                                   "nodes": nodes, 
-                                  "x_axis": x_axis_select}
+                                  "x_axis": x_axis_select,
+                                  "hybrid": hybrid}
             )
         },
         "Tetris": {
@@ -214,7 +221,7 @@ def time_vs_kpar(timing_list):
 
     plt.legend(node_list, bbox_to_anchor=(1, 1.025), loc="upper left", title="# nodes")
 
-def chessboard_plot(data, nodes, x_axis="NPAR"):
+def chessboard_plot(data, nodes, x_axis="NPAR", hybrid=False):
     
     timing_list = data["timing_list"]
     
@@ -260,7 +267,7 @@ def chessboard_plot(data, nodes, x_axis="NPAR"):
     ax.set_ylabel("KPAR")
     
     kpar, ncore = find_parallel_config(
-        data["n_kpoints"], data["nbands"], nodes,
+        data["n_kpoints"], data["nbands"], nodes, is_hybrid=hybrid
     )
     n_cores = node_timings[0]["kpar"] * node_timings[0]["npar"] * node_timings[0]["ncore"]
     optimal_x = ncore if x_axis == "ncore" else n_cores // kpar // ncore
