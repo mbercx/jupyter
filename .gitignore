@@ -6,3 +6,4 @@ cage/
 temp.cif
 .DS_Store
 parallel/README.md
+parallel_analysis_compare.ipynb
