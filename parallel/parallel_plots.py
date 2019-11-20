@@ -11,40 +11,8 @@ from ipyfilechooser import FileChooser
 
 from vscworkflows.firetasks.core import VaspParallelizationTask
 
-
-def find_parallel_config(n_kpoints, nbands, n_nodes, 
-                         cores_per_node=28, optimal_ncore=7, is_hybrid=False):
-    
-    n_cores = int(n_nodes * cores_per_node)
-    
-    kpar_list = VaspParallelizationTask._find_kpar_list(
-        n_kpoints=n_kpoints, n_cores=n_cores, cores_per_node=cores_per_node
-    )
-    
-    choice = {"kpar": 0, "ncore": 0}
-    
-    if is_hybrid:
-        optimal_ncore += 1
-    
-    for k in kpar_list:
-        nc = VaspParallelizationTask._find_ncore(
-            cores_per_k=n_cores // k,
-            optimal_ncore=optimal_ncore,
-            nbands=nbands
-        )
-        if abs(nc - optimal_ncore) <= abs(choice["ncore"] - optimal_ncore):
-            if k > choice["kpar"]:
-                choice = {"kpar": k, "ncore": nc}
-                        
-    kpar = choice["kpar"]
-    ncore = choice["ncore"] if not is_hybrid else \
-                n_cores // choice["kpar"] // choice["ncore"]
-    
-    core_waste = VaspParallelizationTask._find_core_waste(
-        n_kpoints, kpar, n_cores
-    )
-    
-    return kpar, ncore
+OPT_BAND_PARALLEL_PBE = 7
+OPT_BAND_PARALLEL_HSE = 8
 
 def interface(f):
     
@@ -91,7 +59,7 @@ def interface(f):
                                   value=ncore_list[:3],
                                   rows=len(ncore_list),
                                   layout=select_layout)
-    hybrid = Checkbox(value=False,
+    is_hybrid = Checkbox(value=False,
                       description="Hybrid?")
 
     widget_mappings = {
@@ -105,23 +73,23 @@ def interface(f):
         },
         "Chessboard": {
             "descriptions": ["Nodes", "X-axis", "Hybrid"],
-            "input": (nodes, x_axis_select, hybrid),
+            "input": (nodes, x_axis_select, is_hybrid),
             "output": interactive_output(
                 chessboard_plot, {"data": fixed(data),
                                   "nodes": nodes, 
                                   "x_axis": x_axis_select,
-                                  "hybrid": hybrid}
+                                  "is_hybrid": is_hybrid}
             )
         },
         "Tetris": {
             "descriptions": ["Nodes", "KPAR", "NCORE", "Hybrid"],
-            "input": [nodes_select, kpar_select, ncore_select, hybrid],
+            "input": [nodes_select, kpar_select, ncore_select, is_hybrid],
             "output": interactive_output(
                 tetris_plot, {"data": fixed(data),
                               "nodes_choices": nodes_select,
                               "kpar_choices": kpar_select,
                               "ncore_choices": ncore_select,
-                              "hybrid": hybrid}
+                              "is_hybrid": is_hybrid}
             )
         },
         "Optimal": {
@@ -222,7 +190,7 @@ def time_vs_kpar(timing_list):
 
     plt.legend(node_list, bbox_to_anchor=(1, 1.025), loc="upper left", title="# nodes")
 
-def chessboard_plot(data, nodes, x_axis="NPAR", hybrid=False):
+def chessboard_plot(data, nodes, x_axis="NPAR", is_hybrid=False):
     
     timing_list = data["timing_list"]
     
@@ -267,10 +235,15 @@ def chessboard_plot(data, nodes, x_axis="NPAR", hybrid=False):
     ax.set_yticklabels([str(k) for k in node_kpar_list])
     ax.set_ylabel("KPAR")
     
-    kpar, ncore = find_parallel_config(
-        data["n_kpoints"], data["nbands"], nodes, is_hybrid=hybrid
-    )
+    opt_band_parallel = OPT_BAND_PARALLEL_HSE if is_hybrid else OPT_BAND_PARALLEL_PBE
     n_cores = node_timings[0]["kpar"] * node_timings[0]["npar"] * node_timings[0]["ncore"]
+    cores_per_node = n_cores // nodes
+    
+    kpar, ncore = VaspParallelizationTask._optimize_parallelization(
+        nkpts=data["n_kpoints"], nbands=data["nbands"], number_of_cores=n_cores, 
+        cores_per_node=cores_per_node, opt_band_parallel=opt_band_parallel,
+        is_hybrid=is_hybrid
+    )
     optimal_x = ncore if x_axis == "ncore" else n_cores // kpar // ncore
     
     try:
@@ -289,7 +262,7 @@ def chessboard_plot(data, nodes, x_axis="NPAR", hybrid=False):
     plt.title(str(nodes) + " NODES")
     
 def tetris_plot(data, nodes_choices, kpar_choices, 
-                ncore_choices, hybrid):
+                ncore_choices, is_hybrid):
     
     timing_list = data["timing_list"]
     
@@ -318,7 +291,8 @@ def tetris_plot(data, nodes_choices, kpar_choices,
         
         try:
             norm = colors.Normalize(vmin=np.min([t["timing"] for t in n_timings]),
-                                    vmax=np.max(timestep))
+                                    vmax=min(np.max([t["timing"] for t in n_timings]),
+                                             np.mean([t["timing"] for t in n_timings]) * 2.0))
         except ValueError:
             print()
             print("Chosen combination of Nodes/KPAR/NCORE results in empty plot for " + str(n) + " nodes.")
@@ -349,8 +323,14 @@ def tetris_plot(data, nodes_choices, kpar_choices,
             #ax[i].tick_params(left="off", right="off")
             ax[i].yaxis.set_major_locator(plt.NullLocator())
         
-        kpar, ncore = find_parallel_config(
-            data["n_kpoints"], data["nbands"], n, is_hybrid=hybrid
+        opt_band_parallel = OPT_BAND_PARALLEL_HSE if is_hybrid else OPT_BAND_PARALLEL_PBE
+        n_cores = n_timings[0]["kpar"] * n_timings[0]["npar"] * n_timings[0]["ncore"]
+        cores_per_node = n_cores // n
+        
+        kpar, ncore = VaspParallelizationTask._optimize_parallelization(
+            nkpts=data["n_kpoints"], nbands=data["nbands"], number_of_cores=n_cores, 
+            cores_per_node=cores_per_node, opt_band_parallel=opt_band_parallel,
+            is_hybrid=is_hybrid
         )
 
         if kpar in kpar_choices and ncore in ncore_choices:
