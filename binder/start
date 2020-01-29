@@ -1,9 +1,3 @@
 #/bin/bash
 
 exec "$@"
-
-mkdir python
-cd python
-
-git clone https://github.com/mbercx/vsc-workflows.git
-pip install -e vsc-workflows
